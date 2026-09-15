@@ -676,6 +676,11 @@ obj = {
             if (!cchanged) break;
         }
 
+        if (res.length > 3000 && (res.toLowerCase().indexOf("<html") !== -1 || res.toLowerCase().indexOf("<!doctype") !== -1 || res.indexOf("var tk") !== -1 || res.indexOf("data-id") !== -1)) {
+            console.log("%c[CimaNow Debug] SUCCESS! صفحة نهائية كاملة بعد فك الحماية. الطول: " + res.length, "color: white; background: green;");
+            return res;
+        }
+
         try {
             let encodedData = "";
             let offset = 87653;
