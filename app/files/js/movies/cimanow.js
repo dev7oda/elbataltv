@@ -596,8 +596,8 @@ obj = {
                 for (var c_s = 0; c_s < c_scripts.length; c_s++) {
                     var c_sc = c_scripts[c_s];
                     var c_hasAttr = /data-[\w-]+="\d+"/.test(c_sc);
-                    var c_hasRun = c_sc.indexOf("'a' + 't' + 'o' + 'b'") !== -1 || c_sc.indexOf("atob(") !== -1;
-                    var c_hasPay = c_sc.indexOf("new Array(") !== -1 || /=\s*\["\w/.test(c_sc);
+                    var c_hasRun = /["']a["']\s*\+\s*["']t["']\s*\+\s*["']o["']\s*\+\s*["']b["']/.test(c_sc) || c_sc.indexOf("atob(") !== -1;
+                    var c_hasPay = c_sc.indexOf("new Array(") !== -1 || /new\s*\(window\["Arr/.test(c_sc) || /=\s*\["\w/.test(c_sc);
                     if (c_hasAttr && c_hasRun && c_hasPay) {
                         c_body = c_sc;
                         break;
@@ -610,11 +610,15 @@ obj = {
                     var c_na2 = c_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
                     if (c_na2) { c_payStr = c_na2[1]; }
                     else {
-                        var c_la2 = c_body_only.match(/=\s*\[([\s\S]*?)\];/);
-                        if (c_la2) c_payStr = c_la2[1];
+                        var c_w2 = c_body_only.match(/new\s*\(window\["Arr[^)]*\)\s*\(([\s\S]*?)\)\s*;/);
+                        if (c_w2) { c_payStr = c_w2[1]; }
+                        else {
+                            var c_la2 = c_body_only.match(/=\s*\[([\s\S]*?)\];/);
+                            if (c_la2) c_payStr = c_la2[1];
+                        }
                     }
-                    var c_fnm = c_body_only.match(/\['a'\s*\+\s*'t'\s*\+\s*'o'\s*\+\s*'b'\]\('([^']+)'\)/);
-                    var c_eval_m = c_fnm || c_body_only.match(/atob\('([^']+)'\)/);
+                    var c_aeM = c_body_only.match(/\[["']a["']\s*\+\s*["']t["']\s*\+\s*["']o["']\s*\+\s*["']b["']\]\(\s*(["'])([^"']+)\1\s*\)/);
+                    var c_eval_m = c_aeM ? { 1: c_aeM[2] } : (c_body_only.match(/atob\('([^']+)'\)/) || c_body_only.match(/atob\("([^"]+)"\)/));
                     if (c_payStr && c_eval_m && c_attr_m) {
                         var c_strs = Array.from(c_payStr.matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
                         var c_dec = "";
