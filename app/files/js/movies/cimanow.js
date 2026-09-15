@@ -593,60 +593,75 @@ obj = {
                 var c_scripts = res.match(/<script[^>]*>([\s\S]*?)<\/script>/g) || [];
                 var c_body = "";
                 for (var c_s = 0; c_s < c_scripts.length; c_s++) {
-                    if (c_scripts[c_s].indexOf("new Array(") !== -1 && c_scripts[c_s].indexOf("eval(atob(") !== -1) {
-                        c_body = c_scripts[c_s];
+                    var c_sc = c_scripts[c_s];
+                    var c_hasAttr = /data-[\w-]+="\d+"/.test(c_sc);
+                    var c_hasRun = c_sc.indexOf("'a' + 't' + 'o' + 'b'") !== -1 || c_sc.indexOf("atob(") !== -1;
+                    var c_hasPay = c_sc.indexOf("new Array(") !== -1 || /=\s*\["\w/.test(c_sc);
+                    if (c_hasAttr && c_hasRun && c_hasPay) {
+                        c_body = c_sc;
                         break;
                     }
                 }
                 if (c_body) {
                     c_attr_m = c_body.match(/data-[\w-]+="(\d+)"/);
                     var c_body_only = c_body.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
-                    var c_arr = c_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
-                    var c_eval_m = c_body_only.match(/eval\(atob\('([^']+)'\)\)/);
-                    if (c_arr && c_eval_m && c_attr_m) {
-                        var c_attr = parseInt(c_attr_m[1], 10);
-                        var c_strs = Array.from(c_arr[1].matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
-                        var c_dec = atob(c_strs.join(''));
-                        var c_keys = [];
+                    var c_payStr = "";
+                    var c_na2 = c_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
+                    if (c_na2) { c_payStr = c_na2[1]; }
+                    else {
+                        var c_la2 = c_body_only.match(/=\s*\[([\s\S]*?)\];/);
+                        if (c_la2) c_payStr = c_la2[1];
+                    }
+                    var c_fnm = c_body_only.match(/\['a'\s*\+\s*'t'\s*\+\s*'o'\s*\+\s*'b'\]\('([^']+)'\)/);
+                    var c_eval_m = c_fnm || c_body_only.match(/atob\('([^']+)'\)/);
+                    if (c_payStr && c_eval_m && c_attr_m) {
+                        var c_strs = Array.from(c_payStr.matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
+                        var c_dec = "";
+                        if (c_strs.length) {
+                            var c_b64joined = c_strs.join('');
+                            var c_rab = atob(c_b64joined);
+                            for (var c_bi = 0; c_bi < c_rab.length; c_bi++) c_dec += String.fromCharCode(c_rab.charCodeAt(c_bi));
+                        }
+                        var c_kvs = [];
                         try {
-                            var c_bin = atob(c_eval_m[1]);
-                            var c_u8 = new Uint8Array(c_bin.length);
-                            for (var c_b = 0; c_b < c_bin.length; c_b++) c_u8[c_b] = c_bin.charCodeAt(c_b);
-                            var c_code = new TextDecoder("utf-8").decode(c_u8);
-                            var c_tract = 0;
-                            var c_zm = c_code.match(/z-index:(\d+)/);
-                            if (c_zm) c_tract = parseInt(c_zm[1], 10) || 0;
-                            var c_hexs = [];
-                            var c_hexm = c_code.match(/parseInt\('([0-9a-fA-F]+)',\s*16\)/g) || [];
-                            for (var c_h = 0; c_h < c_hexm.length; c_h++) {
-                                var c_hv = c_hexm[c_h].match(/'([0-9a-fA-F]+)'/);
-                                if (c_hv) c_hexs.push(parseInt(c_hv[1], 16));
+                            var c_cbin = atob(c_eval_m[1]);
+                            var c_cu8 = new Uint8Array(c_cbin.length);
+                            for (var c_bb = 0; c_bb < c_cbin.length; c_bb++) c_cu8[c_bb] = c_cbin.charCodeAt(c_bb);
+                            var c_code = new TextDecoder("utf-8").decode(c_cu8);
+                            var c_tr = 0;
+                            var c_ziA = c_code.match(/String\(\((0x[0-9a-f]+|\d+)\)\)/);
+                            var c_ziB = c_code.match(/z-index:(\d+)/);
+                            if (c_ziA) { try { c_tr = eval(c_ziA[1]); } catch (e1) { c_tr = parseInt(c_ziA[1], 10) || 0; } }
+                            else if (c_ziB) { c_tr = parseInt(c_ziB[1], 10) || 0; }
+                            var c_dtr = 0;
+                            var c_wm = c_code.match(/width:(\d+)px/);
+                            if (c_wm) c_dtr = parseInt(c_wm[1], 10) || 0;
+                            var c_kvm = c_code.match(/charCodeAt\(i\) \^ (\w+)\.charCodeAt/);
+                            var c_kvname = c_kvm ? c_kvm[1] : (c_code.indexOf("var kStr") !== -1 ? "kStr" : "");
+                            var c_mf = c_code.indexOf("Math.floor(");
+                            var c_ka = c_kvname ? c_code.indexOf("var " + c_kvname + " = ") : -1;
+                            if (c_kvname && c_mf > -1 && c_ka > -1 && c_ka > c_mf) {
+                                var c_vs = c_code.lastIndexOf("var ", c_mf);
+                                var c_fblock = c_vs > -1 ? c_code.substring(c_vs, c_ka) : ("var __x = " + c_code.substring(c_mf, c_ka));
+                                var c_semi = c_code.indexOf(";", c_ka);
+                                var c_fassign = c_code.substring(c_ka, c_semi + 1);
+                                var c_hasDom = c_code.indexOf("domTrapVal") !== -1;
+                                var c_hasTr = c_code.indexOf("trapVal") !== -1;
+                                var c_kfn = new Function("trapVal", "domTrapVal",
+                                    c_fblock + c_fassign +
+                                    "\nreturn " + c_kvname + " || 0;");
+                                var c_keyres = c_kfn(c_hasTr ? c_tr : 0, c_hasDom ? c_dtr : 0);
+                                if (c_keyres !== undefined && c_keyres !== 0) c_kvs.push(c_keyres);
                             }
-                            var c_bases = [];
-                            var c_nums = c_code.match(/\d{5,6}/g) || [];
-                            for (var c_n = 0; c_n < c_nums.length; c_n++) {
-                                var c_nv = parseInt(c_nums[c_n], 10);
-                                if (c_nv >= 50000 && c_nv <= 99999) c_bases.push(c_nv);
-                            }
-                            var c_offs = [];
-                            var c_offs_m = c_code.match(/\b\d{4,5}\b/g) || [];
-                            for (var c_o = 0; c_o < c_offs_m.length; c_o++) {
-                                var c_ov = parseInt(c_offs_m[c_o], 10);
-                                if (c_ov >= 10000 && c_ov <= 19999) c_offs.push(c_ov);
-                            }
-                            c_offs = c_offs.concat(c_hexs);
-                            var c_half = Math.floor(c_attr / 2);
-                            for (var c_x = 0; c_x < c_bases.length; c_x++) c_keys.push(String(c_bases[c_x] + c_half + c_tract));
-                            for (var c_x2 = 0; c_x2 < c_bases.length; c_x2++) {
-                                for (var c_x3 = 0; c_x3 < c_offs.length; c_x3++) {
-                                    c_keys.push(String(c_bases[c_x2] + c_half + c_offs[c_x3] + c_tract));
-                                }
-                            }
-                            c_keys.push(String(70000 + c_half + 10627 + c_tract));
+                            var c_attrN = parseInt(c_attr_m[1], 10);
+                            var c_half2 = Math.floor(c_attrN / 2);
+                            c_kvs.push(String(80000 + c_half2 + 11178 + c_tr + c_dtr));
+                            c_kvs.push(String(80000 + c_half2 + 11178 + c_tr));
+                            c_kvs.push(String(70000 + c_half2 + 10627 + c_tr));
                         } catch (err5) { }
                         var c_seen2 = {};
-                        for (var c_k = 0; c_k < c_keys.length; c_k++) {
-                            var c_kv = c_keys[c_k];
+                        for (var c_k = 0; c_k < c_kvs.length; c_k++) {
+                            var c_kv = String(c_kvs[c_k]);
                             if (c_seen2[c_kv]) continue;
                             c_seen2[c_kv] = true;
                             var c_out2 = "";
@@ -654,7 +669,7 @@ obj = {
                                 c_out2 += String.fromCharCode(c_dec.charCodeAt(c_j2) ^ c_kv.charCodeAt(c_j2 % c_kv.length));
                             }
                             if (c_out2.toLowerCase().indexOf("<html") !== -1 || c_out2.toLowerCase().indexOf("<!doctype") !== -1 || c_out2.indexOf("var tk") !== -1 || c_out2.indexOf("data-id") !== -1) {
-                                console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة (key=" + c_kv + "). الطول: " + c_out2.length, "color: white; background: green;");
+                                console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية (key=" + c_kv + "). الطول: " + c_out2.length, "color: white; background: green;");
                                 res = c_out2;
                                 cchanged = true;
                                 break;
