@@ -8,7 +8,7 @@ RewriteRule ^d/(.*)$ downloads/$1 [NC,L]
 <IfModule mod_headers.c>
     Header unset ETag
     Header unset Last-Modified
-    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0"
     Header set Pragma "no-cache"
     Header set Expires "0"
 </IfModule>
