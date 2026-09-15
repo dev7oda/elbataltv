@@ -581,6 +581,39 @@ obj = {
 
         console.log("%c[CimaNow Debug] فحص كتل البيانات الضخمة المجمعة...", "color: cyan; font-weight: bold;");
 
+        try {
+            var new_form = res.match(/<script[^>]+data-tbusc="(\d+)"[^>]*>([\s\S]*?)<\/script>/);
+            if (new_form) {
+                var new_tbusc = parseInt(new_form[1], 10);
+                var new_arr = new_form[2].match(/new Array\(([\s\S]*?)\)\s*;/);
+                var new_eval = new_form[2].match(/eval\(atob\('([^']+)'\)\)/);
+                if (new_arr && new_eval) {
+                    var new_strs = Array.from(new_arr[1].matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
+                    var new_dec = atob(new_strs.join(''));
+                    var new_base_offset = Math.floor(new_tbusc / 2) + 70000 + 10627;
+                    var new_traps = [18, 0];
+                    for (var new_i = 0; new_i < new_traps.length; new_i++) {
+                        var new_key = String(new_base_offset + new_traps[new_i]);
+                        var new_out = "";
+                        for (var new_j = 0; new_j < new_dec.length; new_j++) {
+                            new_out += String.fromCharCode(new_dec.charCodeAt(new_j) ^ new_key.charCodeAt(new_j % new_key.length));
+                        }
+                        var new_lower = new_out.toLowerCase();
+                        if (new_lower.indexOf("<html") !== -1 || new_lower.indexOf("<!doctype") !== -1 || new_out.indexOf("var tk") !== -1 || new_out.indexOf("data-id") !== -1) {
+                            console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة. الطول: " + new_out.length, "color: white; background: green;");
+                            res = new_out;
+                            break;
+                        }
+                    }
+                    if (new_out === undefined || new_out.length === 0) {
+                        console.warn("[CimaNow Debug] فشل فك صفحة الحماية الجديدة.");
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("[CimaNow Debug] خطأ في فك صفحة الحماية الجديدة:", err);
+        }
+
         // 0. فك كل الطبقات المشفرة (blog-post وكل الأشكال) حتى نصيفها
         try {
             let guard = 0;
