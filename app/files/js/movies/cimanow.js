@@ -17,9 +17,13 @@ obj = {
             }
         }
         $.ajax({
-            type: "HEAD",
+            type: "GET",
             url: server_domain,
-            timeout: 5000,
+            timeout: 10000,
+            headers: {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "ar,en;q=0.9"
+            },
             success: function (data, textStatus, xhr) {
                 domain_found(server_domain);
             },
