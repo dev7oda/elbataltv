@@ -585,57 +585,56 @@ obj = {
 
         console.log("%c[CimaNow Debug] فحص كتل البيانات الضخمة المجمعة...", "color: cyan; font-weight: bold;");
 
-        try {
-            var new_tbusc_m = res.match(/data-tbusc="(\d+)"/);
-            var new_scripts = res.match(/<script[^>]*>([\s\S]*?)<\/script>/g) || [];
-            var new_body = "";
-            for (var new_s = 0; new_s < new_scripts.length; new_s++) {
-                if (new_scripts[new_s].indexOf("new Array(") !== -1 && new_scripts[new_s].indexOf("eval(atob(") !== -1) {
-                    new_body = new_scripts[new_s];
-                    break;
+        // فك متكرر: الشكل الجديد (data-tbusc) + الطبقات الخارجية بالتبادل حتى الاستقرار
+        for (var cpass = 0; cpass < 6; cpass++) {
+            var cchanged = false;
+            try {
+                var c_tbusc_m = res.match(/data-tbusc="(\d+)"/);
+                var c_scripts = res.match(/<script[^>]*>([\s\S]*?)<\/script>/g) || [];
+                var c_body = "";
+                for (var c_s = 0; c_s < c_scripts.length; c_s++) {
+                    if (c_scripts[c_s].indexOf("new Array(") !== -1 && c_scripts[c_s].indexOf("eval(atob(") !== -1) {
+                        c_body = c_scripts[c_s];
+                        break;
+                    }
                 }
-            }
-            if (new_body) {
-                var new_body_only = new_body.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
-                var new_arr = new_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
-                var new_eval = new_body_only.match(/eval\(atob\('([^']+)'\)\)/);
-                if (new_arr && new_eval && new_tbusc_m) {
-                    var new_tbusc = parseInt(new_tbusc_m[1], 10);
-                    var new_strs = Array.from(new_arr[1].matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
-                    var new_dec = atob(new_strs.join(''));
-                    var new_base_offset = Math.floor(new_tbusc / 2) + 70000 + 10627;
-                    var new_traps = [18, 0];
-                    for (var new_i = 0; new_i < new_traps.length; new_i++) {
-                        var new_key = String(new_base_offset + new_traps[new_i]);
-                        var new_out = "";
-                        for (var new_j = 0; new_j < new_dec.length; new_j++) {
-                            new_out += String.fromCharCode(new_dec.charCodeAt(new_j) ^ new_key.charCodeAt(new_j % new_key.length));
-                        }
-                        var new_lower = new_out.toLowerCase();
-                        if (new_lower.indexOf("<html") !== -1 || new_lower.indexOf("<!doctype") !== -1 || new_out.indexOf("var tk") !== -1 || new_out.indexOf("data-id") !== -1) {
-                            console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة. الطول: " + new_out.length, "color: white; background: green;");
-                            res = new_out;
-                            break;
+                if (c_body) {
+                    var c_body_only = c_body.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
+                    var c_arr = c_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
+                    var c_eval = c_body_only.match(/eval\(atob\('([^']+)'\)\)/);
+                    if (c_arr && c_eval && c_tbusc_m) {
+                        var c_tbusc = parseInt(c_tbusc_m[1], 10);
+                        var c_strs = Array.from(c_arr[1].matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
+                        var c_dec = atob(c_strs.join(''));
+                        var c_base = Math.floor(c_tbusc / 2) + 70000 + 10627;
+                        var c_traps = [18, 0];
+                        for (var c_i = 0; c_i < c_traps.length; c_i++) {
+                            var c_key = String(c_base + c_traps[c_i]);
+                            var c_out = "";
+                            for (var c_j = 0; c_j < c_dec.length; c_j++) {
+                                c_out += String.fromCharCode(c_dec.charCodeAt(c_j) ^ c_key.charCodeAt(c_j % c_key.length));
+                            }
+                            if (c_out.toLowerCase().indexOf("<html") !== -1 || c_out.toLowerCase().indexOf("<!doctype") !== -1 || c_out.indexOf("var tk") !== -1 || c_out.indexOf("data-id") !== -1) {
+                                console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة. الطول: " + c_out.length, "color: white; background: green;");
+                                res = c_out;
+                                cchanged = true;
+                                break;
+                            }
                         }
                     }
                 }
+            } catch (err3) { }
+            if (!cchanged) {
+                try {
+                    var c_dec2 = mou_aflam_server.decode_page_smart(res);
+                    if (c_dec2 && c_dec2 !== res) {
+                        console.log("%c[CimaNow Debug] تم فك صفحة مشفرة بنجاح. الطول: " + c_dec2.length, "color: white; background: green;");
+                        res = c_dec2;
+                        cchanged = true;
+                    }
+                } catch (err4) { }
             }
-        } catch (err) {
-            console.error("[CimaNow Debug] خطأ في فك صفحة الحماية الجديدة:", err);
-        }
-
-        // 0. فك كل الطبقات المشفرة (blog-post وكل الأشكال) حتى نصيفها
-        try {
-            let guard = 0;
-            while (guard < 3) {
-                const dec = mou_aflam_server.decode_page_smart(res);
-                if (!dec || dec === res) break;
-                console.log("%c[CimaNow Debug] تم فك صفحة مشفرة بنجاح. الطول: " + dec.length, "color: white; background: green;");
-                res = dec;
-                guard++;
-            }
-        } catch (err) {
-            console.error("[CimaNow Debug] فشل فك الصفحة المشفرة:", err);
+            if (!cchanged) break;
         }
 
         try {
