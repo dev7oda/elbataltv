@@ -589,7 +589,7 @@ obj = {
         for (var cpass = 0; cpass < 6; cpass++) {
             var cchanged = false;
             try {
-                var c_tbusc_m = res.match(/data-tbusc="(\d+)"/);
+                var c_attr_m = null;
                 var c_scripts = res.match(/<script[^>]*>([\s\S]*?)<\/script>/g) || [];
                 var c_body = "";
                 for (var c_s = 0; c_s < c_scripts.length; c_s++) {
@@ -599,24 +599,63 @@ obj = {
                     }
                 }
                 if (c_body) {
+                    c_attr_m = c_body.match(/data-[\w-]+="(\d+)"/);
                     var c_body_only = c_body.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
                     var c_arr = c_body_only.match(/new Array\(([\s\S]*?)\)\s*;/);
-                    var c_eval = c_body_only.match(/eval\(atob\('([^']+)'\)\)/);
-                    if (c_arr && c_eval && c_tbusc_m) {
-                        var c_tbusc = parseInt(c_tbusc_m[1], 10);
+                    var c_eval_m = c_body_only.match(/eval\(atob\('([^']+)'\)\)/);
+                    if (c_arr && c_eval_m && c_attr_m) {
+                        var c_attr = parseInt(c_attr_m[1], 10);
                         var c_strs = Array.from(c_arr[1].matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
                         var c_dec = atob(c_strs.join(''));
-                        var c_base = Math.floor(c_tbusc / 2) + 70000 + 10627;
-                        var c_traps = [18, 0];
-                        for (var c_i = 0; c_i < c_traps.length; c_i++) {
-                            var c_key = String(c_base + c_traps[c_i]);
-                            var c_out = "";
-                            for (var c_j = 0; c_j < c_dec.length; c_j++) {
-                                c_out += String.fromCharCode(c_dec.charCodeAt(c_j) ^ c_key.charCodeAt(c_j % c_key.length));
+                        var c_keys = [];
+                        try {
+                            var c_bin = atob(c_eval_m[1]);
+                            var c_u8 = new Uint8Array(c_bin.length);
+                            for (var c_b = 0; c_b < c_bin.length; c_b++) c_u8[c_b] = c_bin.charCodeAt(c_b);
+                            var c_code = new TextDecoder("utf-8").decode(c_u8);
+                            var c_tract = 0;
+                            var c_zm = c_code.match(/z-index:(\d+)/);
+                            if (c_zm) c_tract = parseInt(c_zm[1], 10) || 0;
+                            var c_hexs = [];
+                            var c_hexm = c_code.match(/parseInt\('([0-9a-fA-F]+)',\s*16\)/g) || [];
+                            for (var c_h = 0; c_h < c_hexm.length; c_h++) {
+                                var c_hv = c_hexm[c_h].match(/'([0-9a-fA-F]+)'/);
+                                if (c_hv) c_hexs.push(parseInt(c_hv[1], 16));
                             }
-                            if (c_out.toLowerCase().indexOf("<html") !== -1 || c_out.toLowerCase().indexOf("<!doctype") !== -1 || c_out.indexOf("var tk") !== -1 || c_out.indexOf("data-id") !== -1) {
-                                console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة. الطول: " + c_out.length, "color: white; background: green;");
-                                res = c_out;
+                            var c_bases = [];
+                            var c_nums = c_code.match(/\d{5,6}/g) || [];
+                            for (var c_n = 0; c_n < c_nums.length; c_n++) {
+                                var c_nv = parseInt(c_nums[c_n], 10);
+                                if (c_nv >= 50000 && c_nv <= 99999) c_bases.push(c_nv);
+                            }
+                            var c_offs = [];
+                            var c_offs_m = c_code.match(/\b\d{4,5}\b/g) || [];
+                            for (var c_o = 0; c_o < c_offs_m.length; c_o++) {
+                                var c_ov = parseInt(c_offs_m[c_o], 10);
+                                if (c_ov >= 10000 && c_ov <= 19999) c_offs.push(c_ov);
+                            }
+                            c_offs = c_offs.concat(c_hexs);
+                            var c_half = Math.floor(c_attr / 2);
+                            for (var c_x = 0; c_x < c_bases.length; c_x++) c_keys.push(String(c_bases[c_x] + c_half + c_tract));
+                            for (var c_x2 = 0; c_x2 < c_bases.length; c_x2++) {
+                                for (var c_x3 = 0; c_x3 < c_offs.length; c_x3++) {
+                                    c_keys.push(String(c_bases[c_x2] + c_half + c_offs[c_x3] + c_tract));
+                                }
+                            }
+                            c_keys.push(String(70000 + c_half + 10627 + c_tract));
+                        } catch (err5) { }
+                        var c_seen2 = {};
+                        for (var c_k = 0; c_k < c_keys.length; c_k++) {
+                            var c_kv = c_keys[c_k];
+                            if (c_seen2[c_kv]) continue;
+                            c_seen2[c_kv] = true;
+                            var c_out2 = "";
+                            for (var c_j2 = 0; c_j2 < c_dec.length; c_j2++) {
+                                c_out2 += String.fromCharCode(c_dec.charCodeAt(c_j2) ^ c_kv.charCodeAt(c_j2 % c_kv.length));
+                            }
+                            if (c_out2.toLowerCase().indexOf("<html") !== -1 || c_out2.toLowerCase().indexOf("<!doctype") !== -1 || c_out2.indexOf("var tk") !== -1 || c_out2.indexOf("data-id") !== -1) {
+                                console.log("%c[CimaNow Debug] SUCCESS! تم فك صفحة الحماية الجديدة (key=" + c_kv + "). الطول: " + c_out2.length, "color: white; background: green;");
+                                res = c_out2;
                                 cchanged = true;
                                 break;
                             }
