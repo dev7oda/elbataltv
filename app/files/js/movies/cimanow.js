@@ -584,6 +584,7 @@ obj = {
         if (typeof res !== "string" || !res) return res;
 
         console.log("%c[CimaNow Debug] فحص كتل البيانات الضخمة المجمعة...", "color: cyan; font-weight: bold;");
+        console.log("[CimaNow Debug] INPUT length=" + res.length + " head=" + res.substring(0, 160).replace(/\s+/g, " ").slice(0, 120));
 
         // فك متكرر: الشكل الجديد (data-tbusc) + الطبقات الخارجية بالتبادل حتى الاستقرار
         for (var cpass = 0; cpass < 6; cpass++) {
