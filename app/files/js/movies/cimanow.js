@@ -629,7 +629,7 @@ obj = {
                 for (var c_s = 0; c_s < c_scripts.length; c_s++) {
                     var c_sc = c_scripts[c_s];
                     var c_hasAttr = /data-[\w-]+="\d+"/.test(c_sc);
-                    var c_hasRun = /["']a["']\s*\+\s*["']t["']\s*\+\s*["']o["']\s*\+\s*["']b["']/.test(c_sc) || c_sc.indexOf("atob(") !== -1;
+                    var c_hasRun = /["']a["']\s*\+\s*["']t["']\s*\+\s*["']o["']\s*\+\s*["']b["']/.test(c_sc) || c_sc.indexOf("atob(") !== -1 || /String\.fromCharCode\(\s*97\s*,\s*116\s*,\s*111\s*,\s*98\s*\)/.test(c_sc);
                     var c_hasPay = c_sc.indexOf("new Array(") !== -1 || /new\s*\(window\["Arr/.test(c_sc) || /=\s*\["\w/.test(c_sc);
                     if (c_hasAttr && c_hasRun && c_hasPay) {
                         c_body = c_sc;
@@ -651,7 +651,8 @@ obj = {
                         }
                     }
                     var c_aeM = c_body_only.match(/\[["']a["']\s*\+\s*["']t["']\s*\+\s*["']o["']\s*\+\s*["']b["']\]\(\s*(["'])([^"']+)\1\s*\)/);
-                    var c_eval_m = c_aeM ? { 1: c_aeM[2] } : (c_body_only.match(/atob\('([^']+)'\)/) || c_body_only.match(/atob\("([^"]+)"\)/));
+                    var c_naeM = c_body_only.match(/String\.fromCharCode\(\s*97\s*,\s*116\s*,\s*111\s*,\s*98\s*\)\]\s*\(\s*(['"])([^'"]+)\1\s*\)/);
+                    var c_eval_m = c_aeM ? { 1: c_aeM[2] } : (c_naeM ? { 1: c_naeM[2] } : (c_body_only.match(/atob\('([^']+)'\)/) || c_body_only.match(/atob\("([^"]+)"\)/)));
                     if (c_payStr && c_eval_m && c_attr_m) {
                         var c_strs = Array.from(c_payStr.matchAll(/"([^"]+)"/g), function (m) { return m[1]; });
                         var c_dec = "";
@@ -696,6 +697,41 @@ obj = {
                             c_kvs.push(String(80000 + c_half2 + 11178 + c_tr + c_dtr));
                             c_kvs.push(String(80000 + c_half2 + 11178 + c_tr));
                             c_kvs.push(String(70000 + c_half2 + 10627 + c_tr));
+                            try {
+                                var c_hsum = function (c_src, c_beg, c_end) {
+                                    var c_reg = new RegExp(c_beg + "\\s*\\(([\\s\\S]*?)\\s*\\)\\s*" + c_end);
+                                    var c_m2 = c_src.match(c_reg);
+                                    if (!c_m2) return null;
+                                    var c_tot = 0, c_mx;
+                                    var c_hexre = /0x[0-9a-f]+/gi;
+                                    while ((c_mx = c_hexre.exec(c_m2[1])) !== null) { try { c_tot += parseInt(c_mx[0], 16); } catch (e10) {} }
+                                    return c_tot;
+                                };
+                                var c_p1m = c_code.match(/_part1\s*=\s*_flr\(\s*([\s\S]*?)\s*\/\s*2\s*\)/);
+                                var c_p2m = c_code.match(/_part2\s*=\s*([\s\S]*?)\s*\*\s*_envCheck/);
+                                var c_p3m = c_code.match(/_part3\s*=\s*([\s\S]*?)\s*;/);
+                                var c_tm = c_code.match(/z-i\+'ndex'\]\s*=\s*String\(\((\d+)\)\)/);
+                                var c_p1 = 0, c_p2 = 0, c_p3 = 0, c_t = 49, c_d = 27;
+                                if (c_p1m) { var c_t1 = 0, c_mx1; var c_r1 = /0x[0-9a-f]+/gi; while ((c_mx1 = c_r1.exec(c_p1m[1])) !== null) { try { c_t1 += parseInt(c_mx1[0], 16); } catch (e11) {} } c_p1 = Math.floor(c_t1 / 2); }
+                                if (c_p2m) { var c_t2 = 0, c_mx2; var c_r2 = /0x[0-9a-f]+/gi; while ((c_mx2 = c_r2.exec(c_p2m[1])) !== null) { try { c_t2 += parseInt(c_mx2[0], 16); } catch (e12) {} } c_p2 = c_t2; }
+                                if (c_p3m) { var c_t3 = 0, c_mx3; var c_r3 = /0x[0-9a-f]+/gi; while ((c_mx3 = c_r3.exec(c_p3m[1])) !== null) { try { c_t3 += parseInt(c_mx3[0], 16); } catch (e13) {} } c_p3 = c_t3; }
+                                if (c_p1 || c_p2 || c_p3) {
+                                    var c_envChk = (c_code.indexOf("_envCheck") !== -1) ? 1 : 0;
+                                    var c_dcg = String(c_p1 + c_p2 + c_p3 + c_t + c_d);
+                                    c_kvs.push(c_dcg);
+                                    if (c_envChk === 1) c_kvs.push(String(c_p1 + c_p2 + c_p3 + 0 + 0));
+                                    var c_keypath = c_code.match(/charCodeAt\(i\) \^ (\w+)\.charCodeAt/);
+                                    if (c_keypath) {
+                                        var c_kpn = c_keypath[1];
+                                        var c_kpa = c_code.indexOf("var " + c_kpn + " = ");
+                                        if (c_kpa > -1) {
+                                            var c_kps = c_code.indexOf(";", c_kpa);
+                                            var c_kpe = c_code.substring(c_kpa, c_kps + 1);
+                                            try { var c_kf2 = new Function("trapVal", "domTrapVal", c_kpe + "\nreturn " + c_kpn + " || 0;"); var c_kr2 = c_kf2(c_t, c_d); if (c_kr2 !== undefined && c_kr2 !== 0) c_kvs.push(String(c_kr2)); } catch (e14) {}
+                                        }
+                                    }
+                                }
+                            } catch (err6) {}
                         } catch (err5) { }
                         var c_seen2 = {};
                         for (var c_k = 0; c_k < c_kvs.length; c_k++) {
