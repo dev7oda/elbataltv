@@ -449,12 +449,37 @@ obj = {
         mou_aflam_server.get_wathing_url(watch_btn_link, function (watching_url) {
 
 
-            loading_msadr_ajax = $.ajax({
+            var _wu_targets = (function () {
+                var _seenU = {};
+                var base = decodeURIComponent(decodeURI(watching_url));
+                var seq = [base];
+                var tb = (base.match(/tb=([^&]+)/) || [])[1];
+                if (tb && tb.indexOf(".") > -1) {
+                    var alt = base.replace(/^https?:\/\/[^/]+/, "https://" + tb);
+                    if (alt !== base) seq.push(alt);
+                }
+                var srv = (mou_aflam_server && mou_aflam_server.server_domain || "").replace(/\/+$/, "");
+                if (srv) {
+                    var h = (base.match(/^https?:\/\/[^/]+/) || [""])[0];
+                    var alt2 = base.replace(/^https?:\/\/[^/]+/, srv);
+                    if (alt2 !== base && h.toLowerCase().indexOf(srv.replace(/^https?:\/\//, "").toLowerCase()) === -1) seq.push(alt2);
+                }
+                return seq.filter(function (u) {
+                    if (_seenU[u]) return false; _seenU[u] = 1; return true;
+                });
+            })();
+            var _wu_i = 0;
+            var _try_watch_load = function () {
+                if (_wu_i >= _wu_targets.length) { console.error("[✘] كل محاولات دومين watching فشلت"); return; }
+                var _wu_url = _wu_targets[_wu_i++];
+                console.log("[CimaNow Debug] Watching target (" + _wu_i + "/" + _wu_targets.length + "): " + _wu_url);
+                loading_msadr_ajax = $.ajax({
                 "type": "GET",
-                "url": decodeURIComponent(decodeURI(watching_url)),
+                "url": _wu_url,
                 "headers": {
                     "User-Agent": what_window.Main_USER_AGENT,
-                    "Referer": watch_btn_link
+                    "Referer": watch_btn_link,
+                    "Cookie": mou_aflam_server.phpSessId ? ("PHPSESSID=" + mou_aflam_server.phpSessId) : ""
                 },
                 success: function (watching_res) {
                     watching_res = mou_aflam_server.get_cima_now_res(watching_res);
@@ -522,8 +547,16 @@ obj = {
                     })
 
 
+                }, error: function (xhr, textStatus, errorThrown) {
+                    console.warn("[CimaNow Debug] فشل دومين watching (" + _wu_url + "): " + errorThrown + " status=" + xhr.status);
+                    var _errStr = String(errorThrown) + " " + String(xhr.status);
+                    if (/ERR_ADDRESS_INVALID|ERR_NAME_NOT_RESOLVED|net::|Failed to fetch|status=0/i.test(_errStr)) {
+                        setTimeout(_try_watch_load, 400);
+                    }
                 }
-            })
+                });
+            };
+            _try_watch_load();
         });
     }, decode_page_smart: function (html) {
         if (typeof html !== "string" || !html) return null;
