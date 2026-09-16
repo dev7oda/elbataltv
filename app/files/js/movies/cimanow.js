@@ -853,6 +853,33 @@ obj = {
         return res;
     }, get_wathing_url: function (watch_btn_link, callback) {
 
+        // الرابط الحي لمشاهدة CimaNow أصبح مباشراً، ولا حاجة للمسار القديم
+        // (rm.freex2line.online/blog-post) الذي مات (301 إلى صفحة فوركس).
+        // رابط a.shine يحمل عادة تحميلة loadon: /loadon/?link=<b64>
+        // والفك المباشر يعطي: https://cimanow.cc/<slug>/watching/
+        var resolveWatchingUrl = function (link) {
+            var cur = link;
+            for (var hop = 0; hop < 3; hop++) {
+                try {
+                    var q = cur.indexOf("?link=");
+                    if (q > -1) {
+                        var enc = cur.substring(q + "?link=".length);
+                        var dec = decodeURIComponent(enc).trim();
+                        var real = dec.length > 8 ? atob(dec) : "";
+                        if (real && /^https?:\/\//i.test(real)) { cur = real; continue; }
+                    }
+                } catch (e) {}
+                break;
+            }
+            if (/^https?:\/\//i.test(cur) && cur.indexOf("watching") !== -1) return cur;
+            return link;
+        };
+
+        var finalWatchUrl = resolveWatchingUrl(watch_btn_link);
+        console.log("%c[CimaNow Debug] [✔] رابط مشاهدات CimaNow (مفكوك مباشرة):", "color: #4caf50; font-weight: bold;");
+        console.info(finalWatchUrl);
+
+        // محاولة التقاط PHPSESSID من رابط loadon للجلسة (لا يضر إن فشل)
         loading_msadr_ajax = $.ajax({
             "type": "GET",
             "url": watch_btn_link,
@@ -861,103 +888,26 @@ obj = {
                 "Referer": mou_aflam_server.server_domain
             },
             success: function (res, textStatus, xhr) {
-
-                // محاولة استخراج الهيدر set-cookie
-                var setCookie = xhr.getResponseHeader('Set-Cookie');
                 mou_aflam_server.phpSessId = null;
-
-                if (setCookie) {
-                    // استخدام Regex لاستخراج قيمة PHPSESSID فقط
-                    var match = setCookie.match(/PHPSESSID=([^;]+)/);
+                try {
+                    var setCookie = xhr.getResponseHeader && xhr.getResponseHeader('Set-Cookie');
+                    var match = (setCookie || "").match(/PHPSESSID=([^;]+)/);
                     if (match) {
                         mou_aflam_server.phpSessId = match[1];
                         console.log("تم استخراج PHPSESSID بنجاح: " + mou_aflam_server.phpSessId);
+                    } else {
+                        var allHeaders = (xhr.getAllResponseHeaders && xhr.getAllResponseHeaders()) || "";
+                        var matchAll = allHeaders.match(/phpsessid=([^;|\s|\n]+)/i);
+                        if (matchAll) {
+                            mou_aflam_server.phpSessId = matchAll[1];
+                            console.log("تم العثور على PHPSESSID في الهيدرز العامة: " + mou_aflam_server.phpSessId);
+                        }
                     }
-                } else {
-                    // في حال لم يسمح المتصفح بالوصول للهيدر مباشرة، نبحث في كل الهيدرز المتاحة
-                    console.log("لم يتم العثور على Set-Cookie في الهيدرز المباشرة، جاري الفحص الشامل...");
-                    var allHeaders = xhr.getAllResponseHeaders().toLowerCase();
-                    var matchAll = allHeaders.match(/phpsessid=([^;|\s|\n]+)/);
-                    if (matchAll) {
-                        mou_aflam_server.phpSessId = matchAll[1];
-                        console.log("تم العثور على القيمة في الهيدرز العامة: " + mou_aflam_server.phpSessId);
-                    }
-                }
-
-                if (!mou_aflam_server.phpSessId) {
-                    console.warn("تعذر الوصول لـ PHPSESSID. قد يكون السبب قيود CORS من المتصفح.");
-                }
-
-                loading_msadr_ajax = $.ajax({
-                    "type": "GET",
-                    "url": "https://rm.freex2line.online/2020/02/blog-post.html/",
-                    "headers": {
-                        "User-Agent": what_window.Main_USER_AGENT,
-                        "Referer": watch_btn_link,
-                        "Cookie": mou_aflam_server.phpSessId ? `PHPSESSID=${mou_aflam_server.phpSessId}` : "",
-                        "sec-ch-ua": "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\"",
-                        "sec-ch-ua-mobile": "?0",
-                        "sec-ch-ua-platform": "\"Windows\"",
-                        "Sec-Fetch-Dest": "empty",
-                        "Sec-Fetch-Mode": "cors",
-                        "Sec-Fetch-Site": "cross-site",
-                        "Priority": "u=1, i",
-                        "Pragma": "no-cache",
-                        "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-                        "Accept": "*/*",
-                        "Accept-Language": "en-US",
-                        "Accept-Encoding": "gzip, deflate, br"
-                    },
-                    success: function (redrict_res, textStatus, xhr) {
-
-                        mou_aflam_server.get_direct_watch_link(redrict_res, function (err, finalUrl) {
-                            if (err) {
-                                console.error("[✘] خطأ في عملية التشفير: " + err.message);
-                            } else {
-                                console.log("%c[✔] تم توليد الرابط بنجاح:", "color: #4caf50; font-size: 14px; font-weight: bold;");
-                                console.info(finalUrl);
-
-                                setTimeout(function () {
-
-                                    var baseUrl = finalUrl.split("?")[0];
-                                    var postBody = finalUrl.split("?")[1] || "";
-
-                                    $.ajax({
-                                        "type": "POST",
-                                        "url": baseUrl,
-                                        "headers": {
-                                            "User-Agent": what_window.Main_USER_AGENT,
-                                            "Referer": "https://rm.freex2line.online/2020/02/blog-post.html/",
-                                            "Cookie": mou_aflam_server.phpSessId ? `PHPSESSID=${mou_aflam_server.phpSessId}` : "",
-                                            "sec-ch-ua": "\"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\"",
-                                            "sec-ch-ua-mobile": "?0",
-                                            "sec-ch-ua-platform": "\"Windows\"",
-                                            "Sec-Fetch-Dest": "empty",
-                                            "Sec-Fetch-Mode": "cors",
-                                            "Sec-Fetch-Site": "cross-site",
-                                            "Priority": "u=1, i",
-                                            "Pragma": "no-cache",
-                                            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-                                            "Accept": "*/*",
-                                            "Accept-Language": "en-US",
-                                            "Accept-Encoding": "gzip, deflate, br"
-                                        },
-                                        "contentType": "application/x-www-form-urlencoded",
-                                        "data": postBody,
-                                        success: function (redrict_res, textStatus, xhr) {
-                                            callback(decodeURIComponent(decodeURI(redrict_res)));
-                                        }
-                                    });
-                                }, 10 * 1000);
-
-                            }
-                        });
-
-                    }
-                });
-
-
-
+                } catch (e) {}
+                callback(finalWatchUrl);
+            },
+            error: function () {
+                callback(finalWatchUrl);
             }
         });
 
