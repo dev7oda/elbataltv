@@ -1,0 +1,111 @@
+#update_splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    background: #141414;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    direction: rtl;
+    text-align: center;
+    color: #fff;
+    font-family: 'Noto Sans Arabic', sans-serif;
+    overflow: hidden;
+}
+
+#update_splash .splash_logo {
+    max-width: 250px;
+    width: 90vw;
+    box-shadow: 0 0 20px #00000078;
+    border-radius: 20px;
+    background-color: #1a1a1a;
+    overflow: hidden;
+}
+
+#update_splash .splash_logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#update_splash .splash_title {
+    margin-top: 22px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.6;
+}
+
+#update_splash .splash_desc {
+    font-size: .95rem;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+#update_splash .app_loader_container {
+    position: fixed;
+    bottom: 10vh;
+    left: 0;
+    right: 0;
+    overflow-wrap: break-word;
+    z-index: 1;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 8px;
+    font-family: 'Noto Sans Arabic', sans-serif;
+}
+
+#update_splash .app_status {
+    margin: 0;
+    font-size: 1rem;
+    max-height: 100px;
+    text-align: center;
+    color: #fff;
+    line-height: 1.8;
+}
+
+#update_splash .mou_progress_bar_container {
+    width: 100%;
+    background-color: #88888894;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 30px;
+    margin-top: 12px;
+}
+
+#update_splash .mou_progress_bar {
+    background: linear-gradient(to left, #eb2f24, #c6426e);
+    box-shadow: 0 3px 3px -5px #f2709c, 0 2px 5px #f2709c;
+    border-radius: 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 0;
+    opacity: 0;
+    transition: .2s linear;
+}
+
+#update_splash .d-none {
+    display: none !important;
+}
+
+#update_splash .mou_splash_btn {
+    font-family: 'Noto Sans Arabic', sans-serif;
+    color: #fff !important;
+    padding: 4px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    display: inline-block;
+    text-align: center;
+    background-image: linear-gradient(to left, #eb2f24, #c6426e);
+    margin-top: 12px;
+    border: none;
+}
