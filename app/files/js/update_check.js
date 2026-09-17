@@ -230,7 +230,7 @@ function install_apk_file(apk_name) {
 
 function go_to_index() {
     sessionStorage.setItem("update_check_done", "1");
-    window.location.href = "index1.html" + window.location.search;
+    window.location.href = "index.html" + window.location.search;
 }
 function getFileExtension(filename) {
     const match = filename.match(/\.[0-9a-z]+$/i);

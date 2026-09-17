@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elbatal TV - تطبيق البطل</title>
+    <script>
+        if (sessionStorage.getItem("update_check_done") !== "1") {
+            window.location.replace("update_check.html" + window.location.search);
+        }
+    </script>
     <link rel="stylesheet" href="files/fonts/noto-sans-arabic/font.css">
     <link rel="stylesheet" href="files/fonts/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="files/css/homepagedl.css">
