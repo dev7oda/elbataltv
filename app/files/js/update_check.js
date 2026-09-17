@@ -229,10 +229,8 @@ function install_apk_file(apk_name) {
 }
 
 function go_to_index() {
-    window.update_check_done = true;
-    $("#update_splash").fadeOut(500, function () {
-        $("#update_splash").remove();
-    });
+    sessionStorage.setItem("update_check_done", "1");
+    window.location.href = "index1.html" + window.location.search;
 }
 function getFileExtension(filename) {
     const match = filename.match(/\.[0-9a-z]+$/i);

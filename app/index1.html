@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Elbatal TV</title>
+    <script>
+        if (sessionStorage.getItem("update_check_done") !== "1") {
+            window.location.replace("update_check.html");
+        }
+    </script>
     <link rel="stylesheet" href="files/fonts/noto-sans-arabic/font.css">
     <link rel="stylesheet" href="files/fonts/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="files/css/navigation.css">
@@ -12,29 +17,12 @@
     <link rel="stylesheet" href="files/css/index.css?v=20260811">
     <link rel="stylesheet" href="files/css/popup.css">
     <link rel="stylesheet" href="files/css/toastify.css">
-    <link rel="stylesheet" href="files/css/update_check.css?v=20260918">
 
 </head>
 
 <body>
     <div class="mou_background"></div>
     <div class="full_app_loader"></div>
-
-    <div id="update_splash">
-        <div class="splash_logo">
-            <img src="files/images/logo.png">
-        </div>
-        <div class="splash_title">البطل</div>
-        <div class="splash_desc">متعة وسهولة المشاهدة</div>
-        <div class="app_loader_container">
-            <h1 class="app_status">
-                <i class="fas fa-circle-notch fa-spin fa-2x"></i>
-            </h1>
-            <div class="mou_progress_bar_container d-none" id="downloaded_files">
-                <div class="mou_progress_bar"></div>
-            </div>
-        </div>
-    </div>
 
     <iframe id="servers_frame" class="main_iframe" frameborder="0"></iframe>
     <iframe id="watch_frame" class="main_iframe" frameborder="0"></iframe>
@@ -607,7 +595,6 @@
     </div>
 
     <script src="files/js/jquery.min.js"></script>
-    <script src="files/js/update_check.js?v=20260918"></script>
     <script src="files/js/deobfuscator.js"></script>
     <script src="files/js/evalCalls.js"></script>
     <script src="files/js/socket-io.min.js"></script>

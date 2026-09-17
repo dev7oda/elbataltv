@@ -30,7 +30,7 @@ if (typeof mouscripts == "undefined" || mouscripts.is_network_available()) {
             window.user_id_want_active = now_user_data.user_id;
             show_activation_form(window.user_id_want_active);
             window.log_after_code_validation = function () {
-                window.location.href = "index1.html";
+                window.location.href = "update_check.html";
             }
         }
     } else {
@@ -128,7 +128,7 @@ function auto_login_with_token(token) {
                 message_code = Object.keys(data.messages)[i];
                 message = data.messages[message_code];
                 if (message_code == 200) {
-                    window.location.replace("index1.html");
+                    window.location.replace("update_check.html");
                     return;
                 } else if (message_code == 401) {
                     localStorage.removeItem("user_data");
@@ -882,7 +882,7 @@ function loged_in_success(is_gust = true, username, user_id, email, avatar, g_ic
     }
     localStorage.setItem("user_data", JSON.stringify(user_obj));
 
-    window.location.replace("index1.html");
+    window.location.replace("update_check.html");
 }
 
 $(document).ready(function () {
